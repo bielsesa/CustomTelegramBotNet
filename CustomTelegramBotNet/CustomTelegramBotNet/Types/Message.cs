@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Text;
@@ -43,5 +44,9 @@ namespace CustomTelegramBotNet.Types
         string newChatTitle;
         PhotoSize[] newChatPhoto;
 
+        public void DeserializeFromJson (JToken jToken)
+        {
+
+        }
     }
 }

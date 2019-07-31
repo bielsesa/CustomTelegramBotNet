@@ -5,6 +5,9 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using CustomTelegramBotNet.Types;
+using System.Collections.Generic;
+
 namespace CustomTelegramBotNet
 {
     class TelegramBot
@@ -17,10 +20,9 @@ namespace CustomTelegramBotNet
 
         private static CancellationTokenSource _receivingCancellationTokenSource;
         private static readonly HttpClient _client = new HttpClient();
-        private static string _updateRequest = "";
-        private static string _lastUpdateId = "";
-        private static JsonSerializer jsonSerializer = JsonSerializer.CreateDefault();
-        private static JToken jtLastMessage;
+        private static string _lastUpdateId = "0";
+        private static JsonSerializer _jsonSerializer = JsonSerializer.CreateDefault();
+        private static JToken _lastMessage;
         #endregion
 
         #region Constructors
@@ -49,23 +51,14 @@ namespace CustomTelegramBotNet
             {
                 try
                 {
-                    /*System.IO.File.AppendAllText(
-                        @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet\log.txt", 
-                        string.Format("\n[{0}] Before GetStringAsync\n", DateTime.Now.ToString("HH:mm:ss")));*/
-
-                    //_updateRequest = await _client.GetStringAsync(uriBaseWithToken + "getUpdates");
-                    HttpResponseMessage httpResponseMessage = await _client.GetAsync(string.Format("{0}getUpdates", uriBaseWithToken), cancellationToken);
-
-                    /*System.IO.File.AppendAllText(
-                        @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet\log.txt",
-                        string.Format("\n[{0}] After GetStringAsync\n", DateTime.Now.ToString("HH:mm:ss")));*/
+                    HttpResponseMessage httpResponseMessage = await _client.GetAsync(string.Format("{0}getUpdates?offset={1}", uriBaseWithToken, _lastUpdateId), cancellationToken);
 
                     dynamic jsonObject = JsonConvert.DeserializeObject(await httpResponseMessage.Content.ReadAsStringAsync());
 
                     if (jsonObject["ok"] == "true")
                     {
                         JArray jResultArray = JsonConvert.DeserializeObject<JArray>(jsonObject["result"].ToString());
-                        if (jResultArray.Last().ToString() != _lastUpdateId)
+                        if (jResultArray.Last()["update_id"].ToString() != _lastUpdateId)
                         {
                             foreach (var jArrayItem in jResultArray)
                             {
@@ -73,8 +66,8 @@ namespace CustomTelegramBotNet
                                 Console.WriteLine("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
                             }
 
-                            jtLastMessage = jResultArray.Last();
-                            _lastUpdateId = jResultArray.Last().ToString();
+                            _lastMessage = jResultArray.Last()["message"];
+                            _lastUpdateId = jResultArray.Last()["update_id"].ToString();
                         }
                     }
                 }
@@ -90,6 +83,7 @@ namespace CustomTelegramBotNet
         private static async void SendTextMessageAsync(string text, long chatId)
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, string.Format("{0}sendMessage?chat_id={1}&text={2}", uriBaseWithToken, chatId, text));
+
             HttpResponseMessage messageSentResponse = await _client.SendAsync(message);
 
             string response = await messageSentResponse.Content.ReadAsStringAsync();
@@ -97,27 +91,5 @@ namespace CustomTelegramBotNet
             Console.WriteLine(response);
         }
         #endregion
-
-        private static void ParseJsonResponse(string text)
-        {
-            dynamic jsonObject = JsonConvert.DeserializeObject(text);
-
-            if (jsonObject["ok"] == "true")
-            {
-                JArray jResultArray = JsonConvert.DeserializeObject<JArray>(jsonObject["result"].ToString());
-                if (jResultArray.Last().ToString() != _lastUpdateId)
-                {
-                    foreach (var jArrayItem in jResultArray)
-                    {
-                        Console.WriteLine(jArrayItem);
-                        Console.WriteLine("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-                    }
-
-                    jtLastMessage = jResultArray.Last();
-                    _lastUpdateId = jResultArray.Last().ToString();
-                    SendTextMessageAsync("Hello World!", 215335718);
-                }
-            }
-        }
     }
 }
