@@ -47,37 +47,40 @@ namespace CustomTelegramBotNet
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                System.IO.File.WriteAllText(
-                    @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet", 
-                    string.Format("[{0}] Before GetStringAsync", DateTime.Now.ToString("HH:mm:ss")));
-
-                _updateRequest = await _client.GetStringAsync(uriBaseWithToken + "getUpdates");
-
-                System.IO.File.WriteAllText(
-                    @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet",
-                    string.Format("[{0}] Update Request: {1}", DateTime.Now.ToString("HH:mm:ss"), _updateRequest));
-
-                System.IO.File.WriteAllText(
-                    @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet",
-                    string.Format("[{0}] After GetStringAsync", DateTime.Now.ToString("HH:mm:ss")));
-
-                dynamic jsonObject = JsonConvert.DeserializeObject(_updateRequest);
-
-                if (jsonObject["ok"] == "true")
+                try
                 {
-                    JArray jResultArray = JsonConvert.DeserializeObject<JArray>(jsonObject["result"].ToString());
-                    if (jResultArray.Last().ToString() != _lastUpdateId)
-                    {
-                        foreach (var jArrayItem in jResultArray)
-                        {
-                            Console.WriteLine(jArrayItem);
-                            Console.WriteLine("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-                        }
+                    /*System.IO.File.AppendAllText(
+                        @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet\log.txt", 
+                        string.Format("\n[{0}] Before GetStringAsync\n", DateTime.Now.ToString("HH:mm:ss")));*/
 
-                        jtLastMessage = jResultArray.Last();
-                        _lastUpdateId = jResultArray.Last().ToString();
-                        SendTextMessageAsync("Hello World!", 215335718);
+                    //_updateRequest = await _client.GetStringAsync(uriBaseWithToken + "getUpdates");
+                    HttpResponseMessage httpResponseMessage = await _client.GetAsync(string.Format("{0}getUpdates", uriBaseWithToken), cancellationToken);
+
+                    /*System.IO.File.AppendAllText(
+                        @"C:\Users\step\source\repos\CustomTelegramBotNet\CustomTelegramBotNet\CustomTelegramBotNet\log.txt",
+                        string.Format("\n[{0}] After GetStringAsync\n", DateTime.Now.ToString("HH:mm:ss")));*/
+
+                    dynamic jsonObject = JsonConvert.DeserializeObject(await httpResponseMessage.Content.ReadAsStringAsync());
+
+                    if (jsonObject["ok"] == "true")
+                    {
+                        JArray jResultArray = JsonConvert.DeserializeObject<JArray>(jsonObject["result"].ToString());
+                        if (jResultArray.Last().ToString() != _lastUpdateId)
+                        {
+                            foreach (var jArrayItem in jResultArray)
+                            {
+                                Console.WriteLine(jArrayItem);
+                                Console.WriteLine("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                            }
+
+                            jtLastMessage = jResultArray.Last();
+                            _lastUpdateId = jResultArray.Last().ToString();
+                        }
                     }
+                }
+                catch (HttpRequestException)
+                {
+                    Console.WriteLine("Error en el request HTTP.");
                 }
             }
         }

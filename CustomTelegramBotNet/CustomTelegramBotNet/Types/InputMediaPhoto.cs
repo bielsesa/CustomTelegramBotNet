@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CustomTelegramBotNet
+namespace CustomTelegramBotNet.Types
 {
-    class Message
+    class InputMediaPhoto : InputMedia
     {
-        int message_id;
-
     }
 }
