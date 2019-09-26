@@ -6,11 +6,11 @@ namespace CustomTelegramBotNet
     {
         static void Main(string[] args)
         {
-            TelegramBot botClient = new TelegramBot("953705394:AAFtLctlHehkU9qdI06-QLYPr-cGHel0tQY");
+            TelegramBot botClient = new TelegramBot("paste-here-your-token");
 
             botClient.StartReceiving();
 
-            Console.WriteLine("Bot conectado. Pulse cualquier tecla para cerrar el programa.");
+            Console.WriteLine("Bot connected! Press any key to stop the bot.");
             Console.ReadLine();
         }
     }
